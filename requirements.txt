@@ -1,0 +1,18 @@
+# Core ML
+torch>=2.2
+numpy>=1.26
+pandas>=2.1
+scikit-learn>=1.4
+
+# Data fetching
+kagglehub>=0.3
+
+# Visualization
+matplotlib>=3.8
+seaborn>=0.13
+
+# App
+streamlit>=1.33
+
+# EDA notebook
+jupyter>=1.0

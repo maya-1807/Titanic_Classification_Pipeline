@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data & model artifacts (keep only the small committed sample)
+data/*
+!data/sample_test.csv
+models/*
+!models/.gitkeep
+
+# Kaggle credentials
+kaggle.json
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Other
+elta_ai_home_assignment_ds.md
