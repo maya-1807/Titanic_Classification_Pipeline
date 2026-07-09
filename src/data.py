@@ -51,18 +51,18 @@ def _from_kaggle() -> pd.DataFrame:
         ) from exc
 
 
-def split(df: pd.DataFrame, val: float = 0.15, test: float = 0.15, seed: int = SEED):
-    """Stratified train/val/test split (deterministic for a given seed)."""
-    train_val, test_df = train_test_split(df, test_size=test, stratify=df[TARGET], random_state=seed)
-    train_df, val_df = train_test_split(
-        train_val, test_size=val / (1 - test), stratify=train_val[TARGET], random_state=seed
-    )
-    return train_df, val_df, test_df
+def split(df: pd.DataFrame, test: float = 0.15, seed: int = SEED):
+    """Stratified train/test split (deterministic for a given seed).
+
+    Two-way on purpose: model selection uses k-fold CV on train (which manufactures
+    its own train/val folds), so a separate static validation set is redundant."""
+    train_df, test_df = train_test_split(df, test_size=test, stratify=df[TARGET], random_state=seed)
+    return train_df, test_df
 
 
 def main() -> None:
     df = fetch_raw_data()
-    parts = dict(zip(("train", "val", "test"), split(df)))
+    parts = dict(zip(("train", "test"), split(df)))
     for name, part in parts.items():
         part.to_csv(DATA_DIR / f"{name}.csv", index=False)
         print(f"[data] {name:>5}: {len(part):>3} rows, survival rate {part[TARGET].mean():.3f}")
