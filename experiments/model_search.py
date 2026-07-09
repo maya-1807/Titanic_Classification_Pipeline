@@ -1,17 +1,4 @@
-"""Random search over MLP hyperparameters x feature sets, via stratified k-fold CV.
-
-Throwaway harness (not a shipped deliverable) to pick an MLP config before writing
-`train.py`. The deliverable is a PyTorch model, so the search estimator IS the MLP
-(logreg/RF appear only as reference yardsticks, not candidates).
-
-Why random search, not a full grid: with ~750 rows the CV score wobbles by ~0.03
-AUC, so evaluating thousands of grid points and taking the max mostly selects
-noise. A fixed budget of random draws over the axes that matter finds the good
-region cheaply, and we pick with the one-standard-error rule (simplest model within
-1 std of the best) rather than chasing the single highest — a noisy — score.
-
-`epochs` is absent on purpose: TorchClassifier early-stops, so run length is learned.
-
+"""Model search over MLP hyperparameters x feature sets, via stratified k-fold CV.
 Run:  python -m experiments.model_search [n_configs]
 """
 from __future__ import annotations
@@ -39,9 +26,6 @@ RESULTS_CSV = Path(__file__).resolve().parent / "results.csv"
 
 # --- search space (the extension points) --------------------------------------
 # Named feature sets: kwargs passed to TitanicPreprocessor (feature ablation axis).
-# Chosen from the correlation structure (see experiments/feature_search.py):
-#   Sex~Title r.89 · FamilyBin~FamilySize~IsAlone r.98 · FareLog~FarePerPerson~Pclass r.7+
-#   CabinKnown>Deck for signal · Age has near-zero univariate signal.
 FEATURE_SETS = {
     "all":          {},
     "no_deck":      {"exclude": ["Deck"]},                       # Deck weak, ~ CabinKnown
@@ -54,8 +38,7 @@ FEATURE_SETS = {
     "strong":       {"include": ["Title", "Pclass", "FareLog"]},  # only the top-signal few
 }
 
-# Hyperparameter axes sampled per draw. activation/optimizer carry a low-impact
-# alternative on purpose, so the results show whether they matter (they shouldn't).
+# Hyperparameter axes sampled per draw.
 SEARCH_SPACE = {
     "features":     list(FEATURE_SETS),
     "hidden_dims":  [(32,), (64,), (64, 32), (128, 64), (64, 32, 16)],
@@ -68,7 +51,7 @@ SEARCH_SPACE = {
 }
 MODEL_KEYS = [k for k in SEARCH_SPACE if k != "features"]
 
-# Reference yardsticks (not candidates): run once per feature set for comparison.
+# Reference models (not candidates): run once per feature set for comparison only.
 REFERENCES = {
     "logreg": lambda n: LogisticRegression(max_iter=1000),
     "rf":     lambda n: RandomForestClassifier(n_estimators=300, random_state=SEED),
@@ -108,7 +91,7 @@ def cross_validate(train: pd.DataFrame, pp_kwargs: dict, build) -> dict:
         Xva, yva = pp.transform(raw_va)
         est = build(pp.n_features).fit(Xtr, ytr)
         prob = np.asarray(est.predict_proba(Xva))
-        prob = prob[:, 1] if prob.ndim == 2 else prob  # sklearn returns 2 cols
+        prob = prob[:, 1] if prob.ndim == 2 else prob 
         for name, fn in METRICS.items():
             folds[name].append(fn(yva, prob))
     return {m: (np.mean(v), np.std(v)) for m, v in folds.items()}
@@ -122,7 +105,7 @@ def _row(model: str, features: str, scores: dict, **cfg) -> dict:
 
 def main() -> None:
     n_configs = int(sys.argv[1]) if len(sys.argv) > 1 else N_CONFIGS
-    train, test = split(fetch_raw_data())  # test stays sealed until the final eval
+    train, test = split(fetch_raw_data())
     configs = sample_configs(n_configs, SEED)
     print(f"Train: {len(train)} rows ({N_FOLDS}-fold CV for selection)  |  "
           f"Test: {len(test)} rows (sealed)\n"
@@ -138,7 +121,7 @@ def main() -> None:
         print(f"  [{i:>2}/{len(configs)}] acc={scores['accuracy'][0]:.4f} "
               f"+-{scores['accuracy'][1]:.3f}  {cfg['features']:<8} {cfg['hidden_dims']}")
 
-    # Reference baselines across every feature set (yardsticks, not candidates).
+    # Reference baselines across every feature set (not candidates).
     for ref_name, ref_build in REFERENCES.items():
         for fs_name, kwargs in FEATURE_SETS.items():
             scores = cross_validate(train, kwargs, ref_build)
@@ -175,14 +158,13 @@ def _report_pick(df: pd.DataFrame) -> pd.Series:
 
 
 def _final_test(train: pd.DataFrame, test: pd.DataFrame, pick: pd.Series) -> None:
-    """Refit the selected config on all of train, evaluate ONCE on the sealed test.
-    This is the only time test is touched — the honest generalization estimate."""
+    """Refit the selected config on all of train, evaluate ONCE on the test."""
     pp = TitanicPreprocessor(**FEATURE_SETS[pick.features]).fit(train)
     Xtr, ytr = pp.transform(train)
     Xte, yte = pp.transform(test)
     est = TorchClassifier(pp.n_features, **{k: pick[k] for k in MODEL_KEYS}).fit(Xtr, ytr)
     prob = est.predict_proba(Xte)
-    print(f"\n{'='*60}\nFINAL TEST (selected config, refit on train, {len(test)} sealed rows)\n{'='*60}")
+    print(f"\n{'='*60}\nFINAL TEST (selected config, refit on train, {len(test)} rows)\n{'='*60}")
     print("  " + "  ".join(f"{m}={fn(yte, prob):.4f}" for m, fn in METRICS.items()))
 
 

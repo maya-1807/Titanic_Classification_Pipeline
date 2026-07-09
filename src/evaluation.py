@@ -1,10 +1,4 @@
-"""Evaluation on labelled Titanic data: metrics + plots, reused by the Streamlit app.
-
-Plot helpers return matplotlib `Figure` objects (they never call `plt.show`), so the
-app can `st.pyplot(fig)` and the `__main__` runner below can `savefig` — one implementation,
-identical output. `load_artifacts` / `predict_frame` cover the load-and-infer flow the app
-also needs.
-
+"""Evaluation on labelled Titanic data: metrics + plots.
 Run `python -m src.evaluation` to evaluate the held-out test split and save the plots.
 """
 from __future__ import annotations

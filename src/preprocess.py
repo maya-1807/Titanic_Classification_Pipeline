@@ -1,9 +1,4 @@
 """Titanic preprocessing: feature engineering, imputation, encoding and scaling.
-
-`TitanicPreprocessor` implements the decisions from the EDA (Section 7 of
-`notebooks/eda.ipynb`) as a single, picklable object shared by `train.py` and the
-Streamlit app, so training and inference apply identical transforms.
-
 Run `python -m src.preprocess` to fit on the train split and print a report.
 """
 from __future__ import annotations
@@ -180,7 +175,7 @@ class TitanicPreprocessor:
         title = title.where(title.isin(["Mr", "Mrs", "Miss", "Master"]), "Rare")
         return df.assign(Title=title)
 
-    # --- imputation (per-row; uses learned statistics) -----------------------
+    # --- imputation (per-row, uses learned statistics) -----------------------
     def _impute_embarked(self, row):
         """Missing Embarked -> the same-class port whose median Fare is closest."""
         if pd.notna(row.Embarked):

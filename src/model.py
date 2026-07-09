@@ -1,13 +1,4 @@
-"""PyTorch MLP classifier for Titanic survival, with a scikit-learn-style wrapper.
-
-`MLP` is the network; `TorchClassifier` wraps it with `.fit` / `.predict_proba` so
-it drops into the experiment harness (and later `train.py`) interchangeably with
-sklearn estimators. Reused by both `experiments/model_search.py` and `train.py`.
-
-Activation and optimizer are configurable so the search can confirm which knobs
-matter. Training uses early stopping on an internal validation split, so `epochs`
-is not a hyperparameter to tune.
-"""
+"""PyTorch MLP classifier for Titanic survival, with a scikit-learn-style wrapper."""
 from __future__ import annotations
 
 import copy
