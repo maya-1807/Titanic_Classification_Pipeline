@@ -212,7 +212,7 @@ class TitanicPreprocessor:
 # =============================================================================
 def _self_check() -> None:
     """Fit on train, transform every split, and print a readable report."""
-    tr, va, te = split(fetch_raw_data())
+    tr, te = split(fetch_raw_data())
     pp = TitanicPreprocessor().fit(tr)
 
     def cols(role):
@@ -224,7 +224,7 @@ def _self_check() -> None:
           f"{pp.n_features} encoded columns\n")
 
     print(f"{'split':<6}{'rows':>6}{'columns':>9}{'survival':>10}{'NaNs':>7}")
-    for name, d in [("train", tr), ("val", va), ("test", te)]:
+    for name, d in [("train", tr), ("test", te)]:
         X, y = pp.transform(d)
         print(f"{name:<6}{len(d):>6}{X.shape[1]:>9}{y.mean():>10.3f}{int(np.isnan(X).sum()):>7}")
 

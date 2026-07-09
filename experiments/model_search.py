@@ -96,13 +96,13 @@ def sample_configs(n: int, seed: int) -> list[dict]:
     return out
 
 
-def cross_validate(dev: pd.DataFrame, pp_kwargs: dict, build) -> dict:
+def cross_validate(train: pd.DataFrame, pp_kwargs: dict, build) -> dict:
     """Mean/std CV score per metric for one (feature set, model), refitting the
     preprocessor inside each fold to avoid leakage. build(n_features) -> estimator."""
     skf = StratifiedKFold(N_FOLDS, shuffle=True, random_state=SEED)
     folds = {m: [] for m in METRICS}
-    for tr_idx, va_idx in skf.split(dev, dev[TARGET]):
-        raw_tr, raw_va = dev.iloc[tr_idx], dev.iloc[va_idx]
+    for tr_idx, va_idx in skf.split(train, train[TARGET]):
+        raw_tr, raw_va = train.iloc[tr_idx], train.iloc[va_idx]
         pp = TitanicPreprocessor(**pp_kwargs).fit(raw_tr)
         Xtr, ytr = pp.transform(raw_tr)
         Xva, yva = pp.transform(raw_va)
@@ -117,15 +117,15 @@ def cross_validate(dev: pd.DataFrame, pp_kwargs: dict, build) -> dict:
 def _row(model: str, features: str, scores: dict, **cfg) -> dict:
     means = {m: mean for m, (mean, _) in scores.items()}
     return {"model": model, "features": features, **cfg, **means,
-            "roc_auc_std": scores["roc_auc"][1]}
+            "accuracy_std": scores["accuracy"][1], "roc_auc_std": scores["roc_auc"][1]}
 
 
 def main() -> None:
     n_configs = int(sys.argv[1]) if len(sys.argv) > 1 else N_CONFIGS
-    tr, va, te = split(fetch_raw_data())
-    dev = pd.concat([tr, va], ignore_index=True)  # test (te) stays sealed
+    train, test = split(fetch_raw_data())  # test stays sealed until the final eval
     configs = sample_configs(n_configs, SEED)
-    print(f"Dev set: {len(dev)} rows, {N_FOLDS}-fold CV\n"
+    print(f"Train: {len(train)} rows ({N_FOLDS}-fold CV for selection)  |  "
+          f"Test: {len(test)} rows (sealed)\n"
           f"Random search: {len(configs)} MLP configs + {len(REFERENCES)} references "
           f"x {len(FEATURE_SETS)} feature sets\n")
 
@@ -133,42 +133,57 @@ def main() -> None:
     for i, cfg in enumerate(configs, 1):
         model_cfg = {k: cfg[k] for k in MODEL_KEYS}
         build = lambda n, c=model_cfg: TorchClassifier(n, **c)
-        scores = cross_validate(dev, FEATURE_SETS[cfg["features"]], build)
+        scores = cross_validate(train, FEATURE_SETS[cfg["features"]], build)
         rows.append(_row("mlp", cfg["features"], scores, **model_cfg))
-        print(f"  [{i:>2}/{len(configs)}] auc={scores['roc_auc'][0]:.4f} "
-              f"+-{scores['roc_auc'][1]:.3f}  {cfg['features']:<8} {cfg['hidden_dims']}")
+        print(f"  [{i:>2}/{len(configs)}] acc={scores['accuracy'][0]:.4f} "
+              f"+-{scores['accuracy'][1]:.3f}  {cfg['features']:<8} {cfg['hidden_dims']}")
 
     # Reference baselines across every feature set (yardsticks, not candidates).
     for ref_name, ref_build in REFERENCES.items():
         for fs_name, kwargs in FEATURE_SETS.items():
-            scores = cross_validate(dev, kwargs, ref_build)
+            scores = cross_validate(train, kwargs, ref_build)
             rows.append(_row(ref_name, fs_name, scores))
 
-    df = pd.DataFrame(rows).sort_values("roc_auc", ascending=False).reset_index(drop=True)
+    df = pd.DataFrame(rows).sort_values("accuracy", ascending=False).reset_index(drop=True)
     df.to_csv(RESULTS_CSV, index=False)
 
     pd.set_option("display.width", 220, "display.max_rows", None)
     print("\n" + df.round(4).to_string())
     print(f"\nSaved {RESULTS_CSV.relative_to(RESULTS_CSV.parents[1])}")
-    _report_pick(df)
+    pick = _report_pick(df)
+    _final_test(train, test, pick)
 
 
-def _report_pick(df: pd.DataFrame) -> None:
-    """Top MLP by AUC, plus the one-standard-error pick: the simplest MLP whose
-    mean AUC is within 1 std of the best (favours regularization over raw score)."""
-    mlp = df[df.model == "mlp"].copy()
+def _report_pick(df: pd.DataFrame) -> pd.Series:
+    """Top MLP by accuracy, plus the one-standard-error pick: the simplest MLP whose
+    mean accuracy is within 1 std of the best (favours regularization over raw score).
+    Returns the one-SE pick — the config carried to the final test."""
+    mlp = df[df.model == "mlp"].copy()  # df already sorted by accuracy
     best = mlp.iloc[0]
-    within = mlp[mlp.roc_auc >= best.roc_auc - best.roc_auc_std].copy()
+    within = mlp[mlp.accuracy >= best.accuracy - best.accuracy_std].copy()
     within["capacity"] = within.hidden_dims.map(sum)
     onese = within.sort_values(["capacity", "dropout"], ascending=[True, False]).iloc[0]
 
     def line(r):
         return (f"{r.features} / {r.hidden_dims} do={r.dropout} bn={r.batchnorm} "
                 f"{r.activation} {r.optimizer} lr={r.lr} wd={r.weight_decay}\n"
-                f"    auc={r.roc_auc:.4f}+-{r.roc_auc_std:.3f}  acc={r.accuracy:.4f}  f1={r.f1:.4f}")
+                f"    acc={r.accuracy:.4f}+-{r.accuracy_std:.3f}  f1={r.f1:.4f}  auc={r.roc_auc:.4f}")
 
-    print(f"\nTop by ROC-AUC:\n  {line(best)}")
-    print(f"\nOne-standard-error pick (simplest within 1 std of best):\n  {line(onese)}")
+    print(f"\nTop by accuracy:\n  {line(best)}")
+    print(f"\nOne-standard-error pick (simplest within 1 std of best accuracy):\n  {line(onese)}")
+    return onese
+
+
+def _final_test(train: pd.DataFrame, test: pd.DataFrame, pick: pd.Series) -> None:
+    """Refit the selected config on all of train, evaluate ONCE on the sealed test.
+    This is the only time test is touched — the honest generalization estimate."""
+    pp = TitanicPreprocessor(**FEATURE_SETS[pick.features]).fit(train)
+    Xtr, ytr = pp.transform(train)
+    Xte, yte = pp.transform(test)
+    est = TorchClassifier(pp.n_features, **{k: pick[k] for k in MODEL_KEYS}).fit(Xtr, ytr)
+    prob = est.predict_proba(Xte)
+    print(f"\n{'='*60}\nFINAL TEST (selected config, refit on train, {len(test)} sealed rows)\n{'='*60}")
+    print("  " + "  ".join(f"{m}={fn(yte, prob):.4f}" for m, fn in METRICS.items()))
 
 
 if __name__ == "__main__":
