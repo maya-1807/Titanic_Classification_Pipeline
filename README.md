@@ -7,6 +7,8 @@ training script, and a Streamlit inference app.
 ≈ **81.3% accuracy** and **0.859 ROC-AUC** on a held-out,
 labeled test split.
 
+deployed as a Streamlit app: [https://titanic-classification-pipeline.streamlit.app](https://titanic-classification-pipeline.streamlit.app) 
+
 ---
 
 ## Quick Start Guide
