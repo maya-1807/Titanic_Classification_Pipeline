@@ -1,0 +1,41 @@
+PassengerId,Survived,Pclass,Name,Sex,Age,SibSp,Parch,Ticket,Fare,Cabin,Embarked
+765,0,3,"Eklund, Mr. Hans Linus",male,16.0,0,0,347074,7.775,,S
+127,0,3,"McMahon, Mr. Martin",male,,0,0,370372,7.75,,Q
+579,0,3,"Caram, Mrs. Joseph (Maria Elias)",female,,1,0,2689,14.4583,,C
+28,0,1,"Fortune, Mr. Charles Alexander",male,19.0,3,2,19950,263.0,C23 C25 C27,S
+825,0,3,"Panula, Master. Urho Abraham",male,2.0,4,1,3101295,39.6875,,S
+805,1,3,"Hedman, Mr. Oskar Arvid",male,27.0,0,0,347089,6.975,,S
+429,0,3,"Flynn, Mr. James",male,,0,0,364851,7.75,,Q
+63,0,1,"Harris, Mr. Henry Birkhardt",male,45.0,1,0,36973,83.475,C83,S
+398,0,2,"McKane, Mr. Peter David",male,46.0,0,0,28403,26.0,,S
+777,0,3,"Tobin, Mr. Roger",male,,0,0,383121,7.75,F38,Q
+323,1,2,"Slayter, Miss. Hilda Mary",female,30.0,0,0,234818,12.35,,Q
+473,1,2,"West, Mrs. Edwy Arthur (Ada Mary Worth)",female,33.0,1,2,C.A. 34651,27.75,,S
+567,0,3,"Stoytcheff, Mr. Ilia",male,19.0,0,0,349205,7.8958,,S
+181,0,3,"Sage, Miss. Constance Gladys",female,,8,2,CA. 2343,69.55,,S
+434,0,3,"Kallio, Mr. Nikolai Erland",male,17.0,0,0,STON/O 2. 3101274,7.125,,S
+253,0,1,"Stead, Mr. William Thomas",male,62.0,0,0,113514,26.55,C87,S
+89,1,1,"Fortune, Miss. Mabel Helen",female,23.0,3,2,19950,263.0,C23 C25 C27,S
+686,0,2,"Laroche, Mr. Joseph Philippe Lemercier",male,25.0,1,2,SC/Paris 2123,41.5792,,C
+640,0,3,"Thorneycroft, Mr. Percival",male,,1,0,376564,16.1,,S
+143,1,3,"Hakkarainen, Mrs. Pekka Pietari (Elin Matilda Dolck)",female,24.0,1,0,STON/O2. 3101279,15.85,,S
+594,0,3,"Bourke, Miss. Mary",female,,0,2,364848,7.75,,Q
+729,0,2,"Bryhl, Mr. Kurt Arnold Gottfrid",male,25.0,1,0,236853,26.0,,S
+280,1,3,"Abbott, Mrs. Stanton (Rosa Hunt)",female,35.0,1,1,C.A. 2673,20.25,,S
+456,1,3,"Jalsevac, Mr. Ivan",male,29.0,0,0,349240,7.8958,,C
+138,0,1,"Futrelle, Mr. Jacques Heath",male,37.0,1,0,113803,53.1,C123,S
+342,1,1,"Fortune, Miss. Alice Elizabeth",female,24.0,3,2,19950,263.0,C23 C25 C27,S
+298,0,1,"Allison, Miss. Helen Loraine",female,2.0,1,2,113781,151.55,C22 C26,S
+854,1,1,"Lines, Miss. Mary Conover",female,16.0,0,1,PC 17592,39.4,D28,S
+615,0,3,"Brocklebank, Mr. William Alfred",male,35.0,0,0,364512,8.05,,S
+884,0,2,"Banfield, Mr. Frederick James",male,28.0,0,0,C.A./SOTON 34068,10.5,,S
+390,1,2,"Lehmann, Miss. Bertha",female,17.0,0,0,SC 1748,12.0,,C
+691,1,1,"Dick, Mr. Albert Adrian",male,31.0,1,0,17474,57.0,B20,S
+187,1,3,"O'Brien, Mrs. Thomas (Johanna ""Hannah"" Godfrey)",female,,1,0,370365,15.5,,Q
+800,0,3,"Van Impe, Mrs. Jean Baptiste (Rosalie Paula Govaert)",female,30.0,1,1,345773,24.15,,S
+334,0,3,"Vander Planke, Mr. Leo Edmondus",male,16.0,2,0,345764,18.0,,S
+680,1,1,"Cardeza, Mr. Thomas Drake Martinez",male,36.0,0,1,PC 17755,512.3292,B51 B53 B55,C
+677,0,3,"Sawyer, Mr. Frederick Charles",male,24.5,0,0,342826,8.05,,S
+93,0,1,"Chaffee, Mr. Herbert Fuller",male,46.0,1,0,W.E.P. 5734,61.175,E31,S
+732,0,3,"Hassan, Mr. Houssein G N",male,11.0,0,0,2699,18.7875,,C
+56,1,1,"Woolner, Mr. Hugh",male,,0,0,19947,35.5,C52,S

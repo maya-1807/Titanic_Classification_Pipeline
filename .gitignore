@@ -12,6 +12,10 @@ env/
 # Data & model artifacts (keep only the small committed sample)
 data/*
 !data/sample_test.csv
+# Keep the raw Kaggle dataset committed so the pipeline runs without credentials
+!data/raw/
+data/raw/*
+!data/raw/train.csv
 models/*
 !models/.gitkeep
 
