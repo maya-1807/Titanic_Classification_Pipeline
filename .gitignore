@@ -32,3 +32,6 @@ elta_ai_home_assignment_ds.md
 
 # Environment variables
 .env
+
+# Experiment outputs
+experiments/results.csv
