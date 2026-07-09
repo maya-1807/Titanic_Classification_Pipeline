@@ -11,6 +11,7 @@ is not a hyperparameter to tune.
 from __future__ import annotations
 
 import copy
+from pathlib import Path
 
 import numpy as np
 import torch
@@ -121,3 +122,23 @@ class TorchClassifier:
 
     def predict(self, X, threshold: float = 0.5) -> np.ndarray:
         return (self.predict_proba(X) >= threshold).astype(int)
+
+    # --- persistence ---------------------------------------------------------
+    def save(self, path: str | Path) -> None:
+        """Persist weights plus the architecture needed to rebuild the net."""
+        torch.save({
+            "state_dict": self.model_.state_dict(),
+            "arch": {"in_dim": self.in_dim, "hidden_dims": self.hidden_dims,
+                     "dropout": self.dropout, "batchnorm": self.batchnorm,
+                     "activation": self.activation},
+        }, path)
+
+    @classmethod
+    def load(cls, path: str | Path, device: str = "cpu") -> "TorchClassifier":
+        """Rebuild a fitted classifier from `save()`, ready for predict_proba/predict."""
+        ckpt = torch.load(path, map_location=device, weights_only=False)
+        obj = cls(**ckpt["arch"], device=device)
+        obj.model_ = MLP(**ckpt["arch"]).to(device)
+        obj.model_.load_state_dict(ckpt["state_dict"])
+        obj.model_.eval()
+        return obj
